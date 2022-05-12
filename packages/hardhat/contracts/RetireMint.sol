@@ -20,9 +20,10 @@ contract RetireMint is
     Counters.Counter private _tokenIdCounter;
 
     struct retirement {
-        uint256 liquid; // Ether (it'd be nice to be an ERC20).
-        uint256 invested; // Ether to invest.
-        uint256 time; // Years in seconds. 64 should be enought.
+        uint256 liquid; // Liquid asset, will get converted to super token. For now, only ETH.
+        uint256 invested; // Amount to invest.
+        uint256 monthlyAllowance; // Years in seconds. 64 should be enought.
+        address[] inheritors;
     }
 
     mapping(uint256 => retirement) retirements;
@@ -32,14 +33,16 @@ contract RetireMint is
     constructor() ERC721("RetireMint", "RETIRE") {}
 
     function _baseURI() internal pure override returns (string memory) {
-        return "https://wizard.openzeppelin.com/";
+        // Change.
+        return "https://ipfs.io";
     }
 
     function safeMint(
         address to,
         string memory uri,
-        uint256 _time,
-        uint8 _liquidPercentage // Ideal: About a years worth.
+        uint256 _monthlyAllowance,
+        uint8 _liquidPercentage,
+        address[] calldata _inheritors
     ) public payable {
         require(_liquidPercentage <= 100);
         uint256 tokenId = _tokenIdCounter.current();
@@ -48,7 +51,12 @@ contract RetireMint is
         _setTokenURI(tokenId, uri);
         uint256 _liquid = (msg.value * _liquidPercentage) / 100; // Make this more robust?
         uint256 _invested = msg.value - _liquid;
-        retirements[tokenId] = retirement(_liquid, _invested, _time);
+        retirements[tokenId] = retirement(
+            _liquid,
+            _invested,
+            _monthlyAllowance,
+            _inheritors
+        );
     }
 
     // The following functions are overrides required by Solidity.
