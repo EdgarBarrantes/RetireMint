@@ -25,7 +25,7 @@ A part of that capital will be liquid capital that will get transformed into a s
 
 The idea is in the future to support different ERC20 tokens and investment strategies that could be chosen according to the depositors preference (an ETH maximalist would like this MVP, but someone more interested in stables would like something DAI based, for example).
 
-This was built with scaffold-eth, therefore, in order to run:
+### This was built with scaffold-eth, therefore, in order to run:
 
 > install and start your 👷‍ Hardhat chain:
 
