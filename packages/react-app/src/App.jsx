@@ -1,4 +1,4 @@
-import { Button, Col, Menu, Row } from "antd";
+import { Button, Card, Col, List, Menu, Row } from "antd";
 import "antd/dist/antd.css";
 import {
   useBalance,
@@ -12,8 +12,11 @@ import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, Route, Switch, useLocation } from "react-router-dom";
 import "./App.css";
+// import assets from "./assets.js";
 import {
   Account,
+  Address,
+  AddressInput,
   Contract,
   Faucet,
   GasGauge,
@@ -60,6 +63,23 @@ const DEBUG = true;
 const NETWORKCHECK = true;
 const USE_BURNER_WALLET = true; // toggle burner wallet feature
 const USE_NETWORK_SELECTOR = false;
+
+const STARTING_JSON = {
+  description: "This is how your retirement could look...",
+  external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+  image: "https://austingriffith.com/images/paintings/buffalo.jpg",
+  name: "Retirement fund",
+  attributes: [
+    {
+      trait_type: "BackgroundColor",
+      value: "green",
+    },
+    {
+      trait_type: "Eyes",
+      value: "googly",
+    },
+  ],
+};
 
 const web3Modal = Web3ModalSetup();
 
@@ -244,6 +264,95 @@ function App(props) {
 
   const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
 
+  const [yourJSON, setYourJSON] = useState(STARTING_JSON);
+  const [sending, setSending] = useState();
+  const [ipfsHash, setIpfsHash] = useState();
+  const [ipfsDownHash, setIpfsDownHash] = useState();
+
+  const [downloading, setDownloading] = useState();
+  const [ipfsContent, setIpfsContent] = useState();
+
+  const [transferToAddresses, setTransferToAddresses] = useState({});
+
+  const [loadedAssets, setLoadedAssets] = useState();
+  // useEffect(() => {
+  //   const updateYourCollectibles = async () => {
+  //     const assetUpdate = [];
+  //     for (const a in assets) {
+  //       try {
+  //         const forSale = await readContracts.YourCollectible.forSale(ethers.utils.id(a));
+  //         let owner;
+  //         if (!forSale) {
+  //           const tokenId = await readContracts.YourCollectible.uriToTokenId(ethers.utils.id(a));
+  //           owner = await readContracts.YourCollectible.ownerOf(tokenId);
+  //         }
+  //         assetUpdate.push({ id: a, ...assets[a], forSale, owner });
+  //       } catch (e) {
+  //         console.log(e);
+  //       }
+  //     }
+  //     setLoadedAssets(assetUpdate);
+  //   };
+  //   if (readContracts && readContracts.YourCollectible) updateYourCollectibles();
+  // }, [assets, readContracts, transferEvents]);
+
+  // const galleryList = [];
+  // for (const a in loadedAssets) {
+  //   console.log("loadedAssets", a, loadedAssets[a]);
+
+  //   const cardActions = [];
+  //   if (loadedAssets[a].forSale) {
+  //     cardActions.push(
+  //       <div>
+  //         <Button
+  //           onClick={() => {
+  //             console.log("gasPrice,", gasPrice);
+  //             tx(writeContracts.YourCollectible.mintItem(loadedAssets[a].id, { gasPrice }));
+  //           }}
+  //         >
+  //           Mint
+  //         </Button>
+  //       </div>,
+  //     );
+  //   } else {
+  //     cardActions.push(
+  //       <div>
+  //         owned by:{" "}
+  //         <Address
+  //           address={loadedAssets[a].owner}
+  //           ensProvider={mainnetProvider}
+  //           blockExplorer={blockExplorer}
+  //           minimized
+  //         />
+  //       </div>,
+  //     );
+  //   }
+
+  //   galleryList.push(
+  //     <Card
+  //       style={{ width: 200 }}
+  //       key={loadedAssets[a].name}
+  //       actions={cardActions}
+  //       title={
+  //         <div>
+  //           {loadedAssets[a].name}{" "}
+  //           <a
+  //             style={{ cursor: "pointer", opacity: 0.33 }}
+  //             href={loadedAssets[a].external_url}
+  //             target="_blank"
+  //             rel="noreferrer"
+  //           >
+  //             {/* <LinkOutlined /> */}
+  //           </a>
+  //         </div>
+  //       }
+  //     >
+  //       <img style={{ maxWidth: 130 }} src={loadedAssets[a].image} alt="" />
+  //       <div style={{ opacity: 0.77 }}>{loadedAssets[a].description}</div>
+  //     </Card>,
+  // );
+  // }
+
   return (
     <div className="App">
       {/* ✏️ Edit the header and change the title to your project name */}
@@ -279,8 +388,61 @@ function App(props) {
 
       <Switch>
         <Route exact path="/">
-          {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
-          <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} />
+          {/* pass in any web3 props to this Home component. For example, yourLocalBalance
+          <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} /> */}
+          {/* <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+            <List
+              bordered
+              dataSource={yourCollectibles}
+              renderItem={item => {
+                const id = item.id.toNumber();
+                return (
+                  <List.Item key={id + "_" + item.uri + "_" + item.owner}>
+                    <Card
+                      title={
+                        <div>
+                          <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
+                        </div>
+                      }
+                    >
+                      <div>
+                        <img src={item.image} style={{ maxWidth: 150 }} alt="" />
+                      </div>
+                      <div>{item.description}</div>
+                    </Card>
+
+                    <div>
+                      owner:{" "}
+                      <Address
+                        address={item.owner}
+                        ensProvider={mainnetProvider}
+                        blockExplorer={blockExplorer}
+                        fontSize={16}
+                      />
+                      <AddressInput
+                        ensProvider={mainnetProvider}
+                        placeholder="transfer to address"
+                        value={transferToAddresses[id]}
+                        onChange={newValue => {
+                          const update = {};
+                          update[id] = newValue;
+                          setTransferToAddresses({ ...transferToAddresses, ...update });
+                        }}
+                      />
+                      <Button
+                        onClick={() => {
+                          console.log("writeContracts", writeContracts);
+                          tx(writeContracts.YourCollectible.transferFrom(address, transferToAddresses[id], id));
+                        }}
+                      >
+                        Transfer
+                      </Button>
+                    </div>
+                  </List.Item>
+                );
+              }}
+            />
+          </div> */}
         </Route>
         <Route exact path="/debug">
           {/*
